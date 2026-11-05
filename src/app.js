@@ -1,60 +1,52 @@
 const express = require('express');
-const helmet = require('helmet');
-const cors = require('cors');
+const pino = require('pino');
 const pinoHttp = require('pino-http');
 const env = require('./config/env');
-const requestIdMiddleware = require('./middleware/requestId');
-const notFoundMiddleware = require('./middleware/notFound');
+const limits = require('./config/limits');
+const requestId = require('./middleware/requestId');
+const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 
-function createApp() {
+// Spec 6.5: these fields are redacted in every log line.
+const REDACTED_FIELDS = ['password', 'authorization', 'token', 'code', 'hiddenTests'];
+const redactPaths = [
+  ...REDACTED_FIELDS,
+  ...REDACTED_FIELDS.map((field) => `*.${field}`),
+  ...REDACTED_FIELDS.map((field) => `*.*.${field}`),
+];
+
+// logStream is only for tests, so log lines can be captured.
+function createApp({ logStream } = {}) {
   const app = express();
 
-  // Security headers (section 6.1)
-  app.use(helmet());
+  const logger = pino({ level: env.LOG_LEVEL, redact: { paths: redactPaths, censor: '[Redacted]' } }, logStream);
 
-  // CORS (section 6.1: section says only listed origins, methods, and headers)
-  const corsOptions = {
-    origin: env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',') : '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Authorization', 'Content-Type'],
-    credentials: false,
-  };
-  app.use(cors(corsOptions));
+  app.use(requestId);
 
-  // Request ID middleware (section 6.3)
-  app.use(requestIdMiddleware);
+  // One JSON line per request: method, route, status, duration, request id, user id when known (spec 6.5).
+  app.use(
+    pinoHttp({
+      logger,
+      genReqId: (req) => req.id,
+      serializers: {
+        req: (req) => ({ id: req.id, method: req.method }),
+        res: (res) => ({ statusCode: res.statusCode }),
+      },
+      customProps: (req) => ({
+        route: req.route ? `${req.baseUrl}${req.route.path}` : 'unmatched',
+        userId: req.user ? String(req.user.id) : undefined,
+      }),
+    })
+  );
 
-  // JSON logging with pino (section 6.5)
-  // In test environment, suppress logs
-  if (env.NODE_ENV !== 'test') {
-    app.use(pinoHttp({
-      level: env.LOG_LEVEL,
-    }));
-  } else {
-    // In test, use a silent logger
-    app.use(pinoHttp({
-      level: 'silent',
-      autoLogging: false,
-    }));
-  }
+  app.use(express.json({ limit: limits.MAX_REQUEST_BODY }));
 
-  // Body parser (built into express)
-  app.use(express.json());
-
-  // Health check (E1, section 4.4)
+  // E1 (spec 4.4): only reports that the process is alive.
   app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
   });
 
-  // Base path for API (section 4.1)
-  // Routes will be mounted here by server.js or in a separate routes module
-  // For Phase 0, only /health exists
-
-  // 404 handler (section 6.2, 6.3)
-  app.use(notFoundMiddleware);
-
-  // Error handler (section 6.3, central middleware for all errors)
+  app.use(notFound);
   app.use(errorHandler);
 
   return app;

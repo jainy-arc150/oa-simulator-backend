@@ -1,71 +1,39 @@
+// All constants live here (spec 6.6). No number from these tables may be written anywhere else.
+
 module.exports = {
-  // Topics (placeholder, from section 3.1 D14)
+  // Placeholder until the question bank is decided (D14)
   TOPICS: ['arrays', 'strings', 'math', 'trees', 'graphs'],
 
-  // Difficulty table (section 1.6)
-  DIFFICULTY_TABLE: {
-    easy: 12,
-    medium: 20,
-    hard: 30,
-  },
+  // Section 1.6: default duration per difficulty, in minutes
+  DIFFICULTY_TABLE: { easy: 12, medium: 20, hard: 30 },
 
-  // Round and question limits (section 1.6)
+  // Section 1.6: limits
   QUESTIONS_PER_ROUND_MIN: 1,
   QUESTIONS_PER_ROUND_MAX: 5,
   ROUND_DURATION_MIN: 5,
   ROUND_DURATION_MAX: 180,
-  MAX_READY_ROUNDS_PER_USER: 20,
-  MAX_CODE_SIZE_BYTES: 51200,
-
-  // Cooldowns (section 1.6)
   RUN_COOLDOWN_SECONDS: 3,
   SUBMIT_COOLDOWN_SECONDS: 5,
-
-  // Attempt limits (section 1.6)
   MAX_RUNS_PER_QUESTION: 30,
   MAX_SUBMITS_PER_QUESTION: 20,
-
-  // Test execution (section 1.6)
+  MAX_CODE_CHARS: 51200,
   DEFAULT_TIME_LIMIT_MS: 2000,
-  MIN_TIME_LIMIT_MS: 500,
-  MAX_TIME_LIMIT_MS: 10000,
+  MAX_READY_ROUNDS_PER_USER: 20,
 
-  // Report thresholds (section 5.5)
+  // Section 4.1: maximum request body
+  MAX_REQUEST_BODY: '512kb',
+
+  // Section 5.5: report settings (thresholds)
   RISKY_RUNTIME_RATIO: 0.8,
-  MANY_FAILED_SUBMITS_THRESHOLD: 3,
+  MANY_FAILED_SUBMITS: 3,
   LATE_SUBMIT_WINDOW_MINUTES: 5,
-  LATE_SUBMITS_THRESHOLD: 3,
-  BLIND_SUBMITS_THRESHOLD: 2,
+  LATE_SUBMIT_COUNT: 3,
+  BLIND_SUBMITS: 2,
   SLOW_START_RATIO: 0.5,
-  TOO_EASY_TIME_LEFT_RATIO: 0.25,
-  EXCELLENT_TIME_LEFT_RATIO: 0.25,
-  STRUGGLE_FAILED_SUBMITS_MIN: 3,
-  STRUGGLE_TIME_LEFT_RATIO_MAX: 0.1,
-  TRIAGE_UNDER_ATTEMPTED_RATIO: 0.5,
+  TIME_LEFT_EXCELLENT_ABOVE: 0.25,
+  STRUGGLE_FAILED_SUBMITS_ABOVE: 3,
+  STRUGGLE_TIME_LEFT_BELOW: 0.1,
+  TRIAGE_UNDER_ATTEMPTED_BELOW: 0.5,
   MAX_INSIGHTS_AFTER_HEADLINE: 3,
   FASTER_ROUND_FACTOR: 0.85,
-
-  // Seed data (section 7.5)
-  SAMPLES_PER_PROBLEM_MIN: 1,
-  SAMPLES_PER_PROBLEM_MAX: 3,
-  HIDDEN_TESTS_PER_PROBLEM_MIN: 5,
-  HIDDEN_TESTS_PER_PROBLEM_MAX: 10,
-
-  // Insight priorities (section 5.5)
-  INSIGHT_PRIORITY: {
-    TRIAGE: 100,
-    TOO_SLOW: 90,
-    EDGE_CASES: 85,
-    SAMPLE_FAIL: 84,
-    CRASH: 83,
-    SYNTAX: 82,
-    NOT_SUBMITTED: 81,
-    RISKY_RUNTIME: 80,
-    MANY_FAILED_SUBMITS: 70,
-    PANIC_SUBMITS: 60,
-    BLIND_SUBMITS: 55,
-    SLOW_START: 40,
-    SLOWEST: 35,
-    TOO_EASY: 30,
-  },
 };

@@ -1,57 +1,43 @@
+const pino = require('pino');
 const env = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const createApp = require('./app');
 
-async function startServer() {
-  try {
-    // Section 6.7: Startup order:
-    // 1. Validate settings (done in env.js, throws and exits if invalid)
-    console.log(`Starting server in ${env.NODE_ENV} mode on port ${env.PORT}`);
+const logger = pino({ level: env.LOG_LEVEL });
 
-    // 2. Connect to MongoDB
-    await connectDB();
+// Spec 6.7 startup order: validate settings (env.js, already done on require),
+// connect to MongoDB, wait for model indexes (no models until Phase 1), then listen.
+async function start() {
+  await connectDB();
+  const server = createApp().listen(env.PORT, () => {
+    logger.info({ port: env.PORT }, 'server listening');
+  });
 
-    // 3. Wait for model indexes to exist (models will be defined in later phases)
-    // For Phase 0, this is a no-op
-
-    // Create and start the app
-    const app = createApp();
-
-    const server = app.listen(env.PORT, () => {
-      console.log(`Server listening on port ${env.PORT}`);
-    });
-
-    // Section 6.7: Graceful shutdown on SIGTERM or SIGINT
-    const gracefulShutdown = async (signal) => {
-      console.log(`Received ${signal}, shutting down gracefully...`);
-
-      // Stop accepting new requests
-      server.close(async () => {
-        // Kill any running Python processes and delete temp folders (will be implemented in Phase 3)
-        // Close the database connection
+  // Spec 6.7 shutdown: stop accepting requests, let running ones finish, close the database, exit.
+  // Killing Python processes and deleting temp folders is added with the runner (Phase 3).
+  async function shutdown(signal) {
+    logger.info({ signal }, 'shutting down');
+    server.close(async () => {
+      try {
         await disconnectDB();
-        console.log('Server shut down successfully');
         process.exit(0);
-      });
-
-      // Force exit after 30 seconds
-      setTimeout(() => {
-        console.error('Forced shutdown after 30 seconds');
+      } catch (err) {
+        logger.error({ err }, 'error during shutdown');
         process.exit(1);
-      }, 30000);
-    };
-
-    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  } catch (error) {
-    console.error('Failed to start server:', error.message);
-    process.exit(1);
+      }
+    });
   }
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
-// Only start if this is the main module (not imported in tests)
-if (require.main === module) {
-  startServer();
-}
+// Spec 6.3: an unhandled promise rejection must never crash the process silently.
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, 'unhandled promise rejection');
+  process.exit(1);
+});
 
-module.exports = startServer;
+start().catch((err) => {
+  logger.error({ err }, 'startup failed');
+  process.exit(1);
+});
