@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(npm install *)",
+      "Bash(npm test *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Phase 0: Build skeleton - config, middleware, app, server, and tests *)"
+    ]
+  }
+}
