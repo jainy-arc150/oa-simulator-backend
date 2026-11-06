@@ -1,14 +1,15 @@
 const pino = require('pino');
 const env = require('./config/env');
-const { connectDB, disconnectDB } = require('./config/db');
+const { connectDB, waitForIndexes, disconnectDB } = require('./config/db');
 const createApp = require('./app');
 
 const logger = pino({ level: env.LOG_LEVEL });
 
 // Spec 6.7 startup order: validate settings (env.js, already done on require),
-// connect to MongoDB, wait for model indexes (no models until Phase 1), then listen.
+// connect to MongoDB, wait for model indexes, then listen.
 async function start() {
   await connectDB();
+  await waitForIndexes();
   const server = createApp().listen(env.PORT, () => {
     logger.info({ port: env.PORT }, 'server listening');
   });

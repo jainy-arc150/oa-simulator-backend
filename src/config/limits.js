@@ -20,6 +20,18 @@ module.exports = {
   DEFAULT_TIME_LIMIT_MS: 2000,
   MAX_READY_ROUNDS_PER_USER: 20,
 
+  // Section 3: field limits of the data model
+  TITLE_LENGTH_MIN: 3,
+  TITLE_LENGTH_MAX: 100,
+  NAME_LENGTH_MIN: 2,
+  NAME_LENGTH_MAX: 50,
+  TIME_LIMIT_MS_MIN: 500,
+  TIME_LIMIT_MS_MAX: 10000,
+  SAMPLES_MIN: 1,
+  SAMPLES_MAX: 3,
+  HIDDEN_TESTS_MIN: 5,
+  HIDDEN_TESTS_MAX: 10,
+
   // Section 4.1: maximum request body
   MAX_REQUEST_BODY: '512kb',
 

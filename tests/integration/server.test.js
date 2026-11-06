@@ -2,6 +2,7 @@ const path = require('path');
 const os = require('os');
 const net = require('net');
 const { spawn } = require('child_process');
+const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const SERVER_FILE = path.resolve(__dirname, '../../src/server.js');
@@ -76,9 +77,9 @@ describe('server running against a real MongoDB (spec 6.7)', () => {
     await mongo.stop();
   });
 
-  async function startServerAndWait() {
+  async function startServerAndWait(uri = mongo.getUri()) {
     const port = await freePort();
-    const run = runServer({ ...GOOD, MONGODB_URI: mongo.getUri(), PORT: String(port) });
+    const run = runServer({ ...GOOD, MONGODB_URI: uri, PORT: String(port) });
     await waitFor(() => run.output.includes('server listening') || run.exit);
     return { run, port };
   }
@@ -98,6 +99,39 @@ describe('server running against a real MongoDB (spec 6.7)', () => {
       run.child.kill('SIGKILL');
       await run.exited;
     }
+  });
+
+  test('all model indexes, including the unique partial ACTIVE-round index, exist once the server is listening', async () => {
+    const uri = mongo.getUri('indexes-ready');
+    const { run } = await startServerAndWait(uri);
+    const connection = await mongoose.createConnection(uri).asPromise();
+    try {
+      const keys = async (name) => (await connection.collection(name).indexes()).map((i) => JSON.stringify(i.key));
+      const assessments = await connection.collection('assessments').indexes();
+      const active = assessments.find((i) => i.name === 'one_active_round_per_user');
+      expect(active).toMatchObject({ unique: true, partialFilterExpression: { status: 'ACTIVE' } });
+      expect(await keys('users')).toContain(JSON.stringify({ email: 1 }));
+      expect(await keys('problems')).toContain(JSON.stringify({ slug: 1 }));
+      expect(await keys('submissions')).toContain(JSON.stringify({ assessment: 1, slotIndex: 1, submittedAt: 1 }));
+      expect(await keys('attemptEvents')).toContain(JSON.stringify({ assessment: 1, slotIndex: 1, at: 1 }));
+    } finally {
+      await connection.close();
+      run.child.kill('SIGKILL');
+      await run.exited;
+    }
+  });
+
+  test('if an index cannot be built the server exits non-zero and never starts listening', async () => {
+    const uri = mongo.getUri('index-conflict');
+    const connection = await mongoose.createConnection(uri).asPromise();
+    await connection.collection('assessments').createIndex({ user: 1 }, { name: 'one_active_round_per_user', unique: true });
+    await connection.close();
+
+    const { run } = await startServerAndWait(uri);
+    const { code } = await run.exited;
+    expect(code).toBe(1);
+    expect(run.output).toContain('startup failed');
+    expect(run.output).not.toContain('server listening');
   });
 
   test.each(['SIGTERM', 'SIGINT'])('%s stops the server cleanly with exit code 0 and it stops listening', async (signal) => {
