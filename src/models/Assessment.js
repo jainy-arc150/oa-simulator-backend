@@ -90,7 +90,7 @@ assessmentSchema.pre('validate', async function () {
   if (!changed) return;
 
   const ids = this.slots.map((slot) => slot.problem).filter(Boolean);
-  const problems = await Problem.find({ _id: { $in: ids } }).select('topic difficulty').lean();
+  const problems = await Problem.find({ _id: mongoose.trusted({ $in: ids }) }).select('topic difficulty').lean();
   const byId = new Map(problems.map((p) => [String(p._id), p]));
 
   this.slots.forEach((slot, position) => {

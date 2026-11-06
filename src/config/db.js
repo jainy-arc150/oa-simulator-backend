@@ -6,6 +6,10 @@ const Assessment = require('../models/Assessment');
 const Submission = require('../models/Submission');
 const AttemptEvent = require('../models/AttemptEvent');
 
+// Spec 6.2: second layer against NoSQL operator injection. A filter value such as { $ne: 'x' }
+// is treated as a plain value; trusted code wraps its own operators with mongoose.trusted().
+mongoose.set('sanitizeFilter', true);
+
 async function connectDB() {
   await mongoose.connect(env.MONGODB_URI);
 }

@@ -32,6 +32,15 @@ module.exports = {
   HIDDEN_TESTS_MIN: 5,
   HIDDEN_TESTS_MAX: 10,
 
+  // Sections 3.4, 6.2: user input limits
+  PASSWORD_BYTES_MIN: 8,
+  PASSWORD_BYTES_MAX: 72,
+  EMAIL_LENGTH_MAX: 254,
+
+  // Section 6.4: rate limiting for register and login
+  RATE_LIMIT_WINDOW_MS: 60000,
+  AUTH_RATE_LIMIT_MAX: 10,
+
   // Section 4.1: maximum request body
   MAX_REQUEST_BODY: '512kb',
 

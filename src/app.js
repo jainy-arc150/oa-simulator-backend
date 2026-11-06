@@ -6,6 +6,8 @@ const limits = require('./config/limits');
 const requestId = require('./middleware/requestId');
 const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
+const { createAuthLimiter } = require('./middleware/rateLimit');
+const createAuthRoutes = require('./routes/authRoutes');
 
 // Spec 6.5: these fields are redacted in every log line.
 const REDACTED_FIELDS = ['password', 'authorization', 'token', 'code', 'hiddenTests'];
@@ -20,6 +22,9 @@ function createApp({ logStream } = {}) {
   const app = express();
 
   const logger = pino({ level: env.LOG_LEVEL, redact: { paths: redactPaths, censor: '[Redacted]' } }, logStream);
+
+  // Spec 6.4: behind a proxy the real client address is used for rate limiting.
+  app.set('trust proxy', env.TRUST_PROXY);
 
   app.use(requestId);
 
@@ -45,6 +50,8 @@ function createApp({ logStream } = {}) {
   app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
   });
+
+  app.use('/api/auth', createAuthRoutes(createAuthLimiter()));
 
   app.use(notFound);
   app.use(errorHandler);
