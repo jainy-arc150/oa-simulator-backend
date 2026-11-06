@@ -2,6 +2,7 @@ const pino = require('pino');
 const env = require('./config/env');
 const { connectDB, waitForIndexes, disconnectDB } = require('./config/db');
 const createApp = require('./app');
+const runner = require('./runner');
 
 const logger = pino({ level: env.LOG_LEVEL });
 
@@ -15,11 +16,11 @@ async function start() {
   });
 
   // Spec 6.7 shutdown: stop accepting requests, let running ones finish, close the database, exit.
-  // Killing Python processes and deleting temp folders is added with the runner (Phase 3).
   async function shutdown(signal) {
     logger.info({ signal }, 'shutting down');
     server.close(async () => {
       try {
+        await runner.shutdown();
         await disconnectDB();
         process.exit(0);
       } catch (err) {

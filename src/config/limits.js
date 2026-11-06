@@ -41,6 +41,9 @@ module.exports = {
   RATE_LIMIT_WINDOW_MS: 60000,
   AUTH_RATE_LIMIT_MAX: 10,
 
+  // Section 5.1: how long the syntax check helper may run before the runner counts as failed
+  COMPILE_CHECK_TIMEOUT_MS: 5000,
+
   // Section 4.1: maximum request body
   MAX_REQUEST_BODY: '512kb',
 
