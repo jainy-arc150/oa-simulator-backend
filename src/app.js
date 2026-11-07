@@ -8,6 +8,7 @@ const notFound = require('./middleware/notFound');
 const errorHandler = require('./middleware/errorHandler');
 const { createAuthLimiter } = require('./middleware/rateLimit');
 const createAuthRoutes = require('./routes/authRoutes');
+const topicRoutes = require('./routes/topicRoutes');
 
 // Spec 6.5: these fields are redacted in every log line.
 const REDACTED_FIELDS = ['password', 'authorization', 'token', 'code', 'hiddenTests'];
@@ -52,6 +53,7 @@ function createApp({ logStream } = {}) {
   });
 
   app.use('/api/auth', createAuthRoutes(createAuthLimiter()));
+  app.use('/api/topics', topicRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

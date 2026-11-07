@@ -1,8 +1,8 @@
 // All constants live here (spec 6.6). No number from these tables may be written anywhere else.
 
 module.exports = {
-  // Placeholder until the question bank is decided (D14)
-  TOPICS: ['arrays', 'strings', 'math', 'trees', 'graphs'],
+  // D14: the topics of the question bank in seed/problems
+  TOPICS: ['arrays', 'strings', 'hashing', 'sorting', 'math'],
 
   // Section 1.6: default duration per difficulty, in minutes
   DIFFICULTY_TABLE: { easy: 12, medium: 20, hard: 30 },
@@ -43,6 +43,9 @@ module.exports = {
 
   // Section 5.1: how long the syntax check helper may run before the runner counts as failed
   COMPILE_CHECK_TIMEOUT_MS: 5000,
+
+  // Section 7.5: the reference solution must finish in under this fraction of timeLimitMs on every input
+  REFERENCE_TIME_FRACTION: 0.5,
 
   // Section 4.1: maximum request body
   MAX_REQUEST_BODY: '512kb',

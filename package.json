@@ -9,7 +9,11 @@
     "dev": "nodemon src/server.js",
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
-    "test:fast": "jest --testPathIgnorePatterns slow"
+    "test:fast": "jest --testPathIgnorePatterns slow",
+    "seed:validate": "node seed/validateProblems.js",
+    "seed:generate": "node seed/generateExpected.js",
+    "seed:import": "node seed/seedProblems.js",
+    "seed": "npm run seed:validate && npm run seed:generate && npm run seed:import"
   },
   "keywords": [],
   "author": "",
