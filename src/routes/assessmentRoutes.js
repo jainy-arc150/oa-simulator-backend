@@ -1,6 +1,7 @@
 const express = require('express');
 const assessmentController = require('../controllers/assessmentController');
 const questionController = require('../controllers/questionController');
+const reportController = require('../controllers/reportController');
 const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const asyncHandler = require('../utils/asyncHandler');
@@ -71,5 +72,7 @@ router.post(
   validate({ params: questionParams, body: attemptBody, query: noInput }),
   asyncHandler(questionController.submit)
 );
+// E16 GET /api/assessments/:id/report
+router.get('/:id/report', auth, validate({ params: roundParams, query: noInput }), asyncHandler(reportController.get));
 
 module.exports = router;

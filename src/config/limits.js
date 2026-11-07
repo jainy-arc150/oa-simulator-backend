@@ -76,4 +76,26 @@ module.exports = {
   TRIAGE_UNDER_ATTEMPTED_BELOW: 0.5,
   MAX_INSIGHTS_AFTER_HEADLINE: 3,
   FASTER_ROUND_FACTOR: 0.85,
+  // SLOWEST fires when the slowest question's activeMin / expectedMin is at least this
+  SLOWEST_RATIO_AT_LEAST: 1.0,
+  // Runtimes in report text are shown in seconds with at most this many decimals
+  REPORT_SECONDS_DECIMALS: 2,
+
+  // Section 5.5: insight rule priorities (higher comes first)
+  INSIGHT_PRIORITY: {
+    TRIAGE: 100,
+    TOO_SLOW: 90,
+    EDGE_CASES: 85,
+    SAMPLE_FAIL: 84,
+    CRASH: 83,
+    SYNTAX: 82,
+    NOT_SUBMITTED: 81,
+    RISKY_RUNTIME: 80,
+    MANY_FAILED_SUBMITS: 70,
+    PANIC_SUBMITS: 60,
+    BLIND_SUBMITS: 55,
+    SLOW_START: 40,
+    SLOWEST: 35,
+    TOO_EASY: 30,
+  },
 };
