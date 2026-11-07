@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clock = require('../clock');
 const limits = require('../config/limits');
 const Problem = require('./Problem');
 
@@ -65,7 +66,7 @@ const assessmentSchema = new mongoose.Schema(
     lastRunAt: { type: Date },
     lastSubmitAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: () => clock.now() } }
 );
 
 assessmentSchema.index({ user: 1, createdAt: -1 });

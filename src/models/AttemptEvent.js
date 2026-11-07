@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clock = require('../clock');
 const Submission = require('./Submission');
 
 const attemptEventSchema = new mongoose.Schema(
@@ -22,7 +23,7 @@ const attemptEventSchema = new mongoose.Schema(
       },
     },
   },
-  { timestamps: true, collection: 'attemptEvents' }
+  { timestamps: { currentTime: () => clock.now() }, collection: 'attemptEvents' }
 );
 
 attemptEventSchema.index({ assessment: 1, slotIndex: 1, at: 1 });

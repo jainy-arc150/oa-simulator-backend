@@ -47,6 +47,11 @@ module.exports = {
   // Section 7.5: the reference solution must finish in under this fraction of timeLimitMs on every input
   REFERENCE_TIME_FRACTION: 0.5,
 
+  // Sections 4.4 (E7), 6.2: listing rounds
+  LIST_PAGE_DEFAULT: 1,
+  LIST_LIMIT_DEFAULT: 20,
+  LIST_LIMIT_MAX: 50,
+
   // Section 4.1: maximum request body
   MAX_REQUEST_BODY: '512kb',
 

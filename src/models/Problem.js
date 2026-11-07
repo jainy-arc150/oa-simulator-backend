@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clock = require('../clock');
 const limits = require('../config/limits');
 
 const DIFFICULTIES = Object.keys(limits.DIFFICULTY_TABLE);
@@ -86,7 +87,7 @@ const problemSchema = new mongoose.Schema(
     },
     status: { type: String, required: true, enum: ['draft', 'approved'], default: 'draft' },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: () => clock.now() } }
 );
 
 problemSchema.index({ status: 1, topic: 1, difficulty: 1 });

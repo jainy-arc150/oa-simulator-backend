@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clock = require('../clock');
 
 const submissionSchema = new mongoose.Schema(
   {
@@ -28,7 +29,7 @@ const submissionSchema = new mongoose.Schema(
     runtimeMs: { type: Number },
     submittedAt: { type: Date, required: true },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: () => clock.now() } }
 );
 
 submissionSchema.index({ assessment: 1, slotIndex: 1, submittedAt: 1 });

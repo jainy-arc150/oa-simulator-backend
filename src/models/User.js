@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const clock = require('../clock');
 const limits = require('../config/limits');
 
 const userSchema = new mongoose.Schema(
@@ -13,7 +14,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, trim: true, lowercase: true, unique: true },
     passwordHash: { type: String, required: true, select: false },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: () => clock.now() } }
 );
 
 module.exports = mongoose.model('User', userSchema);
