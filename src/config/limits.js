@@ -40,6 +40,8 @@ module.exports = {
   // Section 6.4: rate limiting for register and login
   RATE_LIMIT_WINDOW_MS: 60000,
   AUTH_RATE_LIMIT_MAX: 10,
+  // Section 6.4: every other /api endpoint, per user id (IP address if no valid token)
+  API_RATE_LIMIT_MAX: 200,
 
   // Section 5.1: how long the syntax check helper may run before the runner counts as failed
   COMPILE_CHECK_TIMEOUT_MS: 5000,

@@ -46,21 +46,29 @@ async function login({ email, password }) {
   return { token: issueToken(user), user: publicUser(user) };
 }
 
-// Returns the user for a Bearer token, or throws 401 UNAUTHORIZED for a bad or expired token
-// or a user that no longer exists (spec 6.1).
-async function authenticate(token) {
+// Checks a token's signature and expiry only, with no database call (spec 6.1). Returns the user
+// id it holds, or null for a bad or expired token.
+function verifyToken(token) {
   let payload;
   try {
     payload = jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'], clockTimestamp: nowInSeconds() });
   } catch (err) {
-    throw unauthorized();
+    return null;
   }
-  if (typeof payload.exp !== 'number') throw unauthorized();
-  if (typeof payload.sub !== 'string' || !mongoose.isValidObjectId(payload.sub)) throw unauthorized();
+  if (typeof payload.exp !== 'number') return null;
+  if (typeof payload.sub !== 'string' || !mongoose.isValidObjectId(payload.sub)) return null;
+  return payload.sub;
+}
 
-  const user = await User.findById(payload.sub);
+// Returns the user for a Bearer token, or throws 401 UNAUTHORIZED for a bad or expired token
+// or a user that no longer exists (spec 6.1).
+async function authenticate(token) {
+  const userId = verifyToken(token);
+  if (!userId) throw unauthorized();
+
+  const user = await User.findById(userId);
   if (!user) throw unauthorized();
   return user;
 }
 
-module.exports = { register, login, authenticate, publicUser };
+module.exports = { register, login, authenticate, verifyToken, publicUser };

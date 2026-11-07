@@ -135,7 +135,15 @@ describe('Request logging (spec 6.5)', () => {
   test('redacts password, authorization, token, code and hiddenTests in every log line', async () => {
     const { app, logs } = buildApp((req, res) => {
       req.log.info(
-        { password: 'pw-secret', token: 'tok-secret', code: 'print(code-secret)', hiddenTests: ['hidden-secret'], body: { password: 'nested-secret' } },
+        {
+          password: 'pw-secret',
+          token: 'tok-secret',
+          code: 'print(code-secret)',
+          hiddenTests: ['hidden-secret'],
+          body: { password: 'nested-secret' },
+          request: { headers: { authorization: 'level3-secret' } },
+          round: { slots: { first: { code: 'level4-secret' } } },
+        },
         'sensitive fields'
       );
       res.json({});
@@ -143,7 +151,7 @@ describe('Request logging (spec 6.5)', () => {
     await request(app).get('/anything').set('Authorization', 'Bearer header-secret');
 
     const output = JSON.stringify(logs);
-    for (const secret of ['pw-secret', 'tok-secret', 'code-secret', 'hidden-secret', 'nested-secret', 'header-secret']) {
+    for (const secret of ['pw-secret', 'tok-secret', 'code-secret', 'hidden-secret', 'nested-secret', 'header-secret', 'level3-secret', 'level4-secret']) {
       expect(output).not.toContain(secret);
     }
     expect(output).toContain('[Redacted]');

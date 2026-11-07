@@ -115,7 +115,7 @@ describe('E14 POST .../run: the run result (spec 4.4, 4.5, 5.2)', () => {
     expect(saved.slots[0].solvedAt).toBeUndefined();
   });
 
-  test('2.5: wrong output shows each sample with input, expected, actual and passed; the RUN event is WRONG_ANSWER', async () => {
+  test('R11, 2.5: wrong output shows each sample with input, expected, actual and passed; the RUN event is WRONG_ANSWER', async () => {
     const { token, roundId } = await activeRound();
     runner.program((input, i) => (i === 0 ? ok('4\n') : addTwo(input)));
 
@@ -128,7 +128,7 @@ describe('E14 POST .../run: the run result (spec 4.4, 4.5, 5.2)', () => {
     expect((await eventsOf(roundId))[0].verdict).toBe('WRONG_ANSWER');
   });
 
-  test('2.5: a runtime error shows the full error text and the sample that failed; later samples still run (D29)', async () => {
+  test('R11, 2.5: a runtime error shows the full error text and the sample that failed; later samples still run (D29)', async () => {
     const { token, roundId } = await activeRound();
     const stderr = 'Traceback (most recent call last):\n  File "main.py", line 2, in <module>\nValueError: invalid literal for int() with base 10: \'5 5\'\n';
     runner.program((input, i) => (i === 0 ? crash(stderr) : addTwo(input)));
@@ -139,7 +139,7 @@ describe('E14 POST .../run: the run result (spec 4.4, 4.5, 5.2)', () => {
     expect((await eventsOf(roundId))[0].verdict).toBe('RUNTIME_ERROR');
   });
 
-  test('2.5: a time limit shows TIME_LIMIT_EXCEEDED for the sample that timed out', async () => {
+  test('R11, 2.5: a time limit shows TIME_LIMIT_EXCEEDED for the sample that timed out', async () => {
     const { token, roundId } = await activeRound();
     runner.program((input, i) => (i === 1 ? timeout() : addTwo(input)));
 
@@ -148,7 +148,7 @@ describe('E14 POST .../run: the run result (spec 4.4, 4.5, 5.2)', () => {
     expect((await eventsOf(roundId))[0].verdict).toBe('TIME_LIMIT_EXCEEDED');
   });
 
-  test('2.5: a syntax error shows the message with the line number and no results; the Run is still counted', async () => {
+  test('R11, 2.5: a syntax error shows the message with the line number and no results; the Run is still counted', async () => {
     const { token, roundId } = await activeRound();
     runner.compileError("SyntaxError: expected ':'", 3);
 
@@ -468,7 +468,7 @@ describe('E15 POST .../submit: verdicts and what is saved (spec 4.4, 4.5, 5.2, 5
     expect(line.failedTestNumber).toBeUndefined();
   });
 
-  test('D27, D28, 4.6: a wrong answer on a hidden test returns only NOT_ACCEPTED; the stored verdict is WRONG_ANSWER', async () => {
+  test('R11, D27, D28, 4.6: a wrong answer on a hidden test returns only NOT_ACCEPTED; the stored verdict is WRONG_ANSWER', async () => {
     const { token, roundId } = await activeRound([await createProblem()]);
     runner.program((input, i) => (i === 3 ? ok('5\n') : addTwo(input)));
 
@@ -489,7 +489,7 @@ describe('E15 POST .../submit: verdicts and what is saved (spec 4.4, 4.5, 5.2, 5
     expect((await savedRound(roundId)).slots[0].solvedAt).toBeUndefined();
   });
 
-  test('2.5, R2: a runtime error on a hidden test is not explained, and its error text (with hidden input) is never returned, stored or logged', async () => {
+  test('R11, 2.5, R2: a runtime error on a hidden test is not explained, and its error text (with hidden input) is never returned, stored or logged', async () => {
     const problem = await markedProblem('math', 'easy');
     const { token, roundId } = await activeRound([problem]);
     runner.program((input) =>
@@ -514,7 +514,7 @@ describe('E15 POST .../submit: verdicts and what is saved (spec 4.4, 4.5, 5.2, 5
     }
   });
 
-  test('2.5, 5.2: a program that passes tests 1 and 2 and then times out is NOT_ACCEPTED, stored as TIME_LIMIT_EXCEEDED with testsPassed 2', async () => {
+  test('R11, 2.5, 5.2: a program that passes tests 1 and 2 and then times out is NOT_ACCEPTED, stored as TIME_LIMIT_EXCEEDED with testsPassed 2', async () => {
     const { token, roundId } = await activeRound([await createProblem()]);
     runner.program((input, i) => (i === 2 ? timeout(2100) : addTwo(input)));
 
@@ -537,7 +537,7 @@ describe('E15 POST .../submit: verdicts and what is saved (spec 4.4, 4.5, 5.2, 5
     expect((await submissionsOf(roundId))[0]).toMatchObject({ verdict: 'WRONG_ANSWER', failedTestNumber: 1, testsPassed: 0 });
   });
 
-  test('2.5, 5.2: a syntax error returns COMPILATION_ERROR with the message and line; no test runs', async () => {
+  test('R11, 2.5, 5.2: a syntax error returns COMPILATION_ERROR with the message and line; no test runs', async () => {
     const { token, roundId } = await activeRound([await createProblem()]);
     runner.compileError('SyntaxError: invalid syntax', 2);
 

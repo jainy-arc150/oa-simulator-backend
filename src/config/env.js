@@ -9,7 +9,16 @@ const envSchema = z
     JWT_SECRET: z.string().min(32, 'must be at least 32 characters'),
     JWT_EXPIRES_IN: z.string().min(1).default('1d'),
     BCRYPT_COST: z.coerce.number().int().min(10).max(12).default(10),
-    CORS_ORIGIN: z.string().min(1).optional(),
+    // A comma-separated list of allowed browser origins (spec 6.1), read as an array.
+    CORS_ORIGIN: z
+      .string()
+      .optional()
+      .transform((value) =>
+        (value || '')
+          .split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean)
+      ),
     TRUST_PROXY: z
       .enum(['true', 'false'])
       .default('false')
@@ -22,11 +31,19 @@ const envSchema = z
     RUNNER_STDERR_LIMIT_BYTES: z.coerce.number().int().positive().default(8192),
   })
   .superRefine((value, ctx) => {
-    if (value.NODE_ENV === 'production' && !value.CORS_ORIGIN) {
+    if (value.NODE_ENV === 'production' && value.CORS_ORIGIN.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['CORS_ORIGIN'],
         message: 'is required in production',
+      });
+    }
+    // Spec 6.1: never a wildcard in production.
+    if (value.NODE_ENV === 'production' && value.CORS_ORIGIN.includes('*')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['CORS_ORIGIN'],
+        message: 'cannot be * in production; list the allowed origins',
       });
     }
   });

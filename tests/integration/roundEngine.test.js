@@ -817,9 +817,9 @@ describe('6.5: round events are logged at info level with ids only', () => {
 
     const events = logs.filter((line) => ['round created', 'round started', 'round finished'].includes(line.msg));
     expect(events.map((line) => line.msg)).toEqual(['round created', 'round started', 'round finished']);
-    // Besides pino's own fields, each line carries the request context that pino-http adds to
-    // req.log (the request id and method, and the route).
-    const context = ['level', 'time', 'pid', 'hostname', 'msg', 'req', 'route'];
+    // Besides pino's own fields, each line carries the request id and method that pino-http adds to
+    // req.log. The route belongs to the request's own completion line only.
+    const context = ['level', 'time', 'pid', 'hostname', 'msg', 'req'];
     for (const line of events) {
       expect(line).toMatchObject({ level: 30, roundId, userId });
       expect(Object.keys(line.req).sort()).toEqual(['id', 'method']);

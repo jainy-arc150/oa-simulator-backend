@@ -68,6 +68,33 @@ describe('config/env.js (spec 6.6)', () => {
     expect(loadEnv({ ...VALID, NODE_ENV: 'development' }).status).toBe(0);
   });
 
+  test('6.1: CORS_ORIGIN is a comma-separated list of origins; unset means none', () => {
+    const listed = JSON.parse(loadEnv({ ...VALID, CORS_ORIGIN: 'https://a.example, https://b.example ,' }).stdout);
+    expect(listed.CORS_ORIGIN).toEqual(['https://a.example', 'https://b.example']);
+    expect(JSON.parse(loadEnv(VALID).stdout).CORS_ORIGIN).toEqual([]);
+  });
+
+  test('6.1: a wildcard CORS_ORIGIN stops the server in production, with a clear message', () => {
+    for (const value of ['*', 'https://a.example,*']) {
+      const { status, stderr } = loadEnv({ ...VALID, NODE_ENV: 'production', CORS_ORIGIN: value });
+      expect(status).toBe(1);
+      expect(stderr).toContain('CORS_ORIGIN: cannot be * in production');
+    }
+    // An empty list in production is the same as a missing one.
+    expect(loadEnv({ ...VALID, NODE_ENV: 'production', CORS_ORIGIN: ' , ' }).stderr).toContain('CORS_ORIGIN: is required in production');
+  });
+
+  test('6.6: .env.example lists exactly the settings that env.js reads', () => {
+    const example = require('fs')
+      .readFileSync(path.resolve(__dirname, '../../.env.example'), 'utf8')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+      .map((line) => line.split('=')[0]);
+    const settings = Object.keys(JSON.parse(loadEnv(VALID).stdout));
+    expect([...example].sort()).toEqual([...settings].sort());
+  });
+
   test('BCRYPT_COST outside 10 to 12 is rejected', () => {
     expect(loadEnv({ ...VALID, BCRYPT_COST: '9' }).status).toBe(1);
     expect(loadEnv({ ...VALID, BCRYPT_COST: '13' }).status).toBe(1);
