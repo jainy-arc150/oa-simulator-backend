@@ -35,6 +35,8 @@ function roundApi(getApp) {
     finishRound: (token, id) => call('post', `/api/assessments/${id}/finish`, token),
     openQuestion: (token, id, index) => call('post', `/api/assessments/${id}/questions/${index}/open`, token),
     saveCode: (token, id, index, body) => call('put', `/api/assessments/${id}/questions/${index}/code`, token).send(body),
+    runCode: (token, id, index, body) => call('post', `/api/assessments/${id}/questions/${index}/run`, token).send(body),
+    submitCode: (token, id, index, body) => call('post', `/api/assessments/${id}/questions/${index}/submit`, token).send(body),
   };
 }
 

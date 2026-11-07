@@ -11,6 +11,7 @@ const {
   roundParams,
   questionParams,
   saveCodeBody,
+  attemptBody,
 } = require('../schemas/assessments');
 
 const router = express.Router();
@@ -55,6 +56,20 @@ router.put(
   auth,
   validate({ params: questionParams, body: saveCodeBody, query: noInput }),
   asyncHandler(questionController.saveCode)
+);
+// E14 POST /api/assessments/:id/questions/:index/run
+router.post(
+  '/:id/questions/:index/run',
+  auth,
+  validate({ params: questionParams, body: attemptBody, query: noInput }),
+  asyncHandler(questionController.run)
+);
+// E15 POST /api/assessments/:id/questions/:index/submit
+router.post(
+  '/:id/questions/:index/submit',
+  auth,
+  validate({ params: questionParams, body: attemptBody, query: noInput }),
+  asyncHandler(questionController.submit)
 );
 
 module.exports = router;

@@ -58,4 +58,8 @@ const questionParams = roundParams.extend({
 // 413 CODE_TOO_LARGE (4.2), so only the type is checked here.
 const saveCodeBody = z.object({ code: z.string() });
 
-module.exports = { noInput, createRoundBody, listRoundsQuery, roundParams, questionParams, saveCodeBody };
+// E14 and E15 body (spec 4.1, 4.4, 6.2): language is exactly python. As in E13, the code length is
+// checked after the round guard and returns 413.
+const attemptBody = z.object({ language: z.literal('python'), code: z.string() });
+
+module.exports = { noInput, createRoundBody, listRoundsQuery, roundParams, questionParams, saveCodeBody, attemptBody };

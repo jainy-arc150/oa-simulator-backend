@@ -18,6 +18,14 @@ const activeRoundMatch = (userId, roundId, now) => ({
   deadline: mongoose.trusted({ $gt: now }),
 });
 
+// Code over the limit gives 413 CODE_TOO_LARGE (4.2). It is checked after the round guard, as in
+// E14 and E15 (4.4).
+function checkCodeSize(code) {
+  if (code.length > limits.MAX_CODE_CHARS) {
+    throw new AppError('CODE_TOO_LARGE', 413, `Code can be at most ${limits.MAX_CODE_CHARS} characters`);
+  }
+}
+
 // The question response of section 4.5.
 function questionResponse(slot, problem, now) {
   return {
@@ -58,9 +66,7 @@ async function saveCode(userId, roundId, index, code, log) {
   const now = clock.now();
   const { round } = await roundStateService.guardQuestion(userId, roundId, index, now, log);
 
-  if (code.length > limits.MAX_CODE_CHARS) {
-    throw new AppError('CODE_TOO_LARGE', 413, `Code can be at most ${limits.MAX_CODE_CHARS} characters`);
-  }
+  checkCodeSize(code);
 
   // Minute 0 is the first minute of the round (5.5). $addToSet keeps the list free of duplicates.
   const minute = Math.floor((now.getTime() - round.startedAt.getTime()) / limits.MS_PER_MINUTE);
@@ -80,4 +86,4 @@ async function saveCode(userId, roundId, index, code, log) {
   }
 }
 
-module.exports = { openQuestion, saveCode };
+module.exports = { openQuestion, saveCode, checkCodeSize };

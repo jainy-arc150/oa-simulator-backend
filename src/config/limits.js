@@ -49,6 +49,11 @@ module.exports = {
 
   // Sections 4.4 (E10), 5.5: deadline = startedAt + durationMin; minute number = floor((now - startedAt) / 1 minute)
   MS_PER_MINUTE: 60000,
+  // Section 5.3: cooldowns are written in seconds and compared in milliseconds
+  MS_PER_SECOND: 1000,
+
+  // Section 5.2: in a Run response, each sample's actual and error are cut at this many characters
+  RUN_OUTPUT_DISPLAY_MAX_CHARS: 10000,
 
   // Sections 4.4 (E7), 6.2: listing rounds
   LIST_PAGE_DEFAULT: 1,
