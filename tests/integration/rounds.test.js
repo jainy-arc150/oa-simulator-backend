@@ -6,16 +6,34 @@ const Assessment = require('../../src/models/Assessment');
 const Problem = require('../../src/models/Problem');
 const roundService = require('../../src/services/roundService');
 const roundStateService = require('../../src/services/roundStateService');
-const { useTestDb, createProblem, assessmentData } = require('../helpers/factories');
+const { useTestDb, assessmentData } = require('../helpers/factories');
 const { useFakeClock } = require('../helpers/fakeClock');
 const { createLogCapture } = require('../helpers/logCapture');
+const {
+  START,
+  MINUTE,
+  at,
+  DEADLINE,
+  registerStudent,
+  roundApi,
+  slot,
+  newId,
+  pool,
+  saveRound,
+  activeFields,
+  finishedFields,
+  fieldsFor,
+  savedRound,
+  rawRounds,
+  fakeLog,
+  MARKERS,
+  markedProblem,
+  expectNoProblemData,
+  SUMMARY_KEYS,
+  SLOT_KEYS,
+} = require('../helpers/rounds');
 
 useTestDb();
-
-const START = new Date('2030-01-01T00:00:00.000Z');
-const MINUTE = 60 * 1000;
-const at = (minutes) => new Date(START.getTime() + minutes * MINUTE);
-const DEADLINE = at(30);
 
 let app;
 let logs;
@@ -31,82 +49,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-// ---------- helpers ----------
-
-let studentCounter = 0;
-async function student() {
-  const res = await request(app)
-    .post('/api/auth/register')
-    .send({ name: 'Round Student', email: `round${++studentCounter}@example.com`, password: 'correct horse battery' });
-  return { token: res.body.token, id: res.body.user.id };
-}
-
-const bearer = (token) => ({ Authorization: `Bearer ${token}` });
-const createRound = (token, body) => request(app).post('/api/assessments').set(bearer(token)).send(body);
-const listRounds = (token, query = '') => request(app).get(`/api/assessments${query}`).set(bearer(token));
-const getRound = (token, id) => request(app).get(`/api/assessments/${id}`).set(bearer(token));
-const deleteRound = (token, id) => request(app).delete(`/api/assessments/${id}`).set(bearer(token));
-
-const slot = (topic, difficulty) => ({ topic, difficulty });
-const newId = () => new mongoose.Types.ObjectId().toString();
-
-async function pool(topic, difficulty, count, overrides = {}) {
-  const problems = [];
-  for (let i = 0; i < count; i++) problems.push(await createProblem({ topic, difficulty, ...overrides }));
-  return problems;
-}
-
-// A round saved straight to the database for the user id, one slot per problem.
-const saveRound = (userId, problems, overrides) => Assessment.create(assessmentData({ _id: userId }, problems, overrides));
-const activeFields = () => ({ status: 'ACTIVE', durationMin: 30, startedAt: START, deadline: DEADLINE });
-const finishedFields = () => ({ ...activeFields(), status: 'FINISHED', finishedAt: at(10), finishReason: 'MANUAL' });
-const fieldsFor = { READY: () => ({}), ACTIVE: activeFields, FINISHED: finishedFields };
-
-const savedRound = (id) => Assessment.findById(id).lean();
-const rawRounds = () => Assessment.collection.find({}).sort({ _id: 1 }).toArray();
-
-// Every piece of problem data and code carries a marker, so a leak shows up in a text search.
-const MARKERS = [
-  'TITLE-MARKER',
-  'STATEMENT-MARKER',
-  'FORMAT-MARKER',
-  'CONSTRAINT-MARKER',
-  'SAMPLE-IN-MARKER',
-  'SAMPLE-OUT-MARKER',
-  'EXPLANATION-MARKER',
-  'HIDDEN-IN-MARKER',
-  'HIDDEN-OUT-MARKER',
-  'CODE-MARKER',
-];
-
-function markedProblem(topic, difficulty) {
-  return createProblem({
-    topic,
-    difficulty,
-    title: 'TITLE-MARKER problem',
-    statement: 'STATEMENT-MARKER',
-    inputFormat: 'FORMAT-MARKER input',
-    outputFormat: 'FORMAT-MARKER output',
-    constraints: 'CONSTRAINT-MARKER',
-    samples: [{ input: 'SAMPLE-IN-MARKER\n', output: 'SAMPLE-OUT-MARKER\n', explanation: 'EXPLANATION-MARKER' }],
-    hiddenTests: Array.from({ length: limits.HIDDEN_TESTS_MIN }, (_, i) => ({
-      input: `HIDDEN-IN-MARKER-${i}\n`,
-      output: `HIDDEN-OUT-MARKER-${i}\n`,
-    })),
-  });
-}
-
-function expectNoProblemData(value, problems) {
-  const text = JSON.stringify(value);
-  for (const marker of MARKERS) expect(text).not.toContain(marker);
-  for (const problem of problems) expect(text).not.toContain(String(problem._id));
-  for (const field of ['hiddenTests', 'statement', 'samples', 'code', 'problem', 'title', 'inputFormat', 'constraints']) {
-    expect(text).not.toContain(`"${field}"`);
-  }
-}
-
-const SUMMARY_KEYS = ['createdAt', 'deadline', 'durationMin', 'finishReason', 'finishedAt', 'id', 'serverTime', 'slots', 'startedAt', 'status'];
-const SLOT_KEYS = ['difficulty', 'index', 'opened', 'runCount', 'solved', 'submitCount', 'topic'];
+const student = () => registerStudent(app);
+const { createRound, listRounds, getRound, deleteRound } = roundApi(() => app);
 
 // ---------- authentication ----------
 
@@ -301,7 +245,7 @@ describe('E6 POST /api/assessments: building a round (spec 4.4, 5.4)', () => {
 
     // The chance that one of the three is never picked in 45 rounds is about 3 * (2/3)^45, below 1 in 10 million.
     for (let i = 0; i < 45; i++) {
-      const summary = await roundService.createRound(userId, { slots: [slot('math', 'medium')] });
+      const summary = await roundService.createRound(userId, { slots: [slot('math', 'medium')] }, fakeLog());
       picked.add(String((await savedRound(summary.id)).slots[0].problem));
       await Assessment.deleteOne({ _id: summary.id });
     }
@@ -813,7 +757,7 @@ describe('Lazy expiry is one conditional update (spec 5.3)', () => {
       { _id: round._id },
       { $set: { status: 'FINISHED', finishReason: 'MANUAL', finishedAt: at(10) } }
     );
-    await roundStateService.expireIfDue(stale, at(40));
+    await roundStateService.expireIfDue(stale, at(40), fakeLog());
 
     expect(await savedRound(round._id)).toMatchObject({ status: 'FINISHED', finishReason: 'MANUAL', finishedAt: at(10) });
   });
@@ -829,7 +773,7 @@ describe('Lazy expiry is one conditional update (spec 5.3)', () => {
     const before = await rawRounds();
 
     for (const round of rounds) {
-      expect(await roundStateService.expireIfDue(await savedRound(round._id), new Date(DEADLINE.getTime() - 1))).toBe(false);
+      expect(await roundStateService.expireIfDue(await savedRound(round._id), new Date(DEADLINE.getTime() - 1), fakeLog())).toBe(false);
     }
     expect(await rawRounds()).toEqual(before);
   });

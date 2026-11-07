@@ -1,9 +1,17 @@
 const express = require('express');
 const assessmentController = require('../controllers/assessmentController');
+const questionController = require('../controllers/questionController');
 const auth = require('../middleware/auth');
 const validate = require('../middleware/validate');
 const asyncHandler = require('../utils/asyncHandler');
-const { noInput, createRoundBody, listRoundsQuery, roundParams } = require('../schemas/assessments');
+const {
+  noInput,
+  createRoundBody,
+  listRoundsQuery,
+  roundParams,
+  questionParams,
+  saveCodeBody,
+} = require('../schemas/assessments');
 
 const router = express.Router();
 
@@ -19,6 +27,34 @@ router.delete(
   auth,
   validate({ params: roundParams, body: noInput, query: noInput }),
   asyncHandler(assessmentController.remove)
+);
+// E10 POST /api/assessments/:id/start
+router.post(
+  '/:id/start',
+  auth,
+  validate({ params: roundParams, body: noInput, query: noInput }),
+  asyncHandler(assessmentController.start)
+);
+// E11 POST /api/assessments/:id/finish
+router.post(
+  '/:id/finish',
+  auth,
+  validate({ params: roundParams, body: noInput, query: noInput }),
+  asyncHandler(assessmentController.finish)
+);
+// E12 POST /api/assessments/:id/questions/:index/open
+router.post(
+  '/:id/questions/:index/open',
+  auth,
+  validate({ params: questionParams, body: noInput, query: noInput }),
+  asyncHandler(questionController.open)
+);
+// E13 PUT /api/assessments/:id/questions/:index/code
+router.put(
+  '/:id/questions/:index/code',
+  auth,
+  validate({ params: questionParams, body: saveCodeBody, query: noInput }),
+  asyncHandler(questionController.saveCode)
 );
 
 module.exports = router;

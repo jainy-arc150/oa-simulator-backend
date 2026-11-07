@@ -47,6 +47,9 @@ module.exports = {
   // Section 7.5: the reference solution must finish in under this fraction of timeLimitMs on every input
   REFERENCE_TIME_FRACTION: 0.5,
 
+  // Sections 4.4 (E10), 5.5: deadline = startedAt + durationMin; minute number = floor((now - startedAt) / 1 minute)
+  MS_PER_MINUTE: 60000,
+
   // Sections 4.4 (E7), 6.2: listing rounds
   LIST_PAGE_DEFAULT: 1,
   LIST_LIMIT_DEFAULT: 20,

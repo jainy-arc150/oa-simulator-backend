@@ -45,4 +45,17 @@ const roundParams = z.object({
   id: z.string().refine((value) => mongoose.isObjectIdOrHexString(value)),
 });
 
-module.exports = { noInput, createRoundBody, listRoundsQuery, roundParams };
+// :index is a question number: a whole number from 1, written without a sign or leading zeros.
+// Anything else returns 404; the round guard checks the upper end against the number of questions (4.3 step 5).
+const questionParams = roundParams.extend({
+  index: z
+    .string()
+    .regex(/^[1-9][0-9]*$/)
+    .transform(Number),
+});
+
+// E13 body (spec 4.4, 6.2). The length limit is checked after the round guard and returns
+// 413 CODE_TOO_LARGE (4.2), so only the type is checked here.
+const saveCodeBody = z.object({ code: z.string() });
+
+module.exports = { noInput, createRoundBody, listRoundsQuery, roundParams, questionParams, saveCodeBody };
